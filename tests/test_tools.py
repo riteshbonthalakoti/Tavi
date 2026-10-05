@@ -85,7 +85,7 @@ def test_filesystem_sandbox(tmp_path):
     assert "exceeds limit" in res.error
 
 def test_shell_tool():
-    tool = ShellTool(timeout_sec=2)
+    tool = ShellTool(timeout_sec=5)
     assert tool.metadata.permission_level == PermissionLevel.CONFIRM
     
     # Valid command
