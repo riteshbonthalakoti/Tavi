@@ -26,9 +26,11 @@ Structured Observation
 
 ## Core Components
 - **ApplicationService**: Shared entry point unifying Web and CLI usage.
+- **AgentEngine**: Executes deterministic FSM workflows safely through the permission layer.
+- **WorkflowRegistry**: Stores and resolves predefined Agent workflows.
 - **ToolRegistry**: Resolves tools by name deterministically.
 - **BaseTool**: Strict contract enforcing `execute()` returning `ToolResult`.
-- **ToolRequest/ToolResult**: Standardized models for cross-component communication.
+- **TaskRequest/TaskResult**: Standardized models for cross-component workflow communication.
 - **PermissionPolicy**: Centralized rules engine mapping tools/operations to `SAFE`, `CONFIRM`, or `BLOCK`.
 - **ConfirmationProvider**: Abstract interface allowing CLI or Web to handle `CONFIRM` decisions.
 

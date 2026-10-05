@@ -1,11 +1,14 @@
 import subprocess
 import time
-from typing import Dict, Any
+import os
+from pathlib import Path
+from typing import Dict, Any, Optional
 from tavi.core.models import ToolMetadata, PermissionLevel, ToolResult
 from tavi.tools.base import BaseTool
 
 class GitTool(BaseTool):
-    def __init__(self):
+    def __init__(self, workspace_root: Optional[str] = None):
+        self.workspace_root = workspace_root or os.getcwd()
         self._metadata = ToolMetadata(
             name="git",
             description="Inspect git repository state.",
@@ -16,14 +19,20 @@ class GitTool(BaseTool):
     @property
     def metadata(self) -> ToolMetadata:
         return self._metadata
-        
+
     def _run_git(self, args: list[str]) -> subprocess.CompletedProcess:
-        return subprocess.run(["git"] + args, capture_output=True, text=True, shell=False)
+        return subprocess.run(
+            ["git"] + args,
+            cwd=self.workspace_root,
+            capture_output=True,
+            text=True,
+            shell=False
+        )
 
     def execute(self, request_id: str, arguments: Dict[str, Any]) -> ToolResult:
         start_time = time.time()
         operation = arguments.get("operation")
-        
+
         try:
             # Verify git repo exists
             check_repo = self._run_git(["rev-parse", "--is-inside-work-tree"])

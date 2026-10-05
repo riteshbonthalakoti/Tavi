@@ -56,8 +56,8 @@ Security is critical to Tavi's architecture since it runs on your local machine:
 | Filesystem security | Complete |
 | Shell security | Complete |
 | Git read-only tooling | Complete |
-| AgentEngine | Planned / In progress |
-| FSM workflows | Planned / In progress |
+| AgentEngine | Complete |
+| FSM workflows | Complete (inspect_project) |
 | Conversational NLP | Planned |
 | Web UI | In progress / Planned |
 
