@@ -1,6 +1,16 @@
 # Tavi
 
-Tavi is a small, local personal agent designed to run interactively in your terminal and via a lightweight web interface.
+Tavi is a small, local personal workspace agent designed to run interactively in your terminal and via a lightweight web interface. Built without AI models, external APIs, or third-party dependencies.
+
+[🌐 Live Web Demo](https://riteshbonthalakoti.github.io/Tavi/)
+
+## Screenshots
+
+### Interactive Terminal Agent
+![Tavi Terminal Agent](screenshot-cli.png)
+
+### Web Companion
+![Tavi Web Interface](screenshot-web.png)
 
 ## Running Tavi
 
@@ -29,7 +39,7 @@ Start the local web server:
 python web.py
 ```
 
-Then open `http://localhost:8000` in your browser.
+Then open `http://localhost:8000` in your browser, or visit the [Live GitHub Pages Demo](https://riteshbonthalakoti.github.io/Tavi/).
 
 ## Capabilities
 
@@ -47,6 +57,6 @@ Then open `http://localhost:8000` in your browser.
 
 No external packages, no LLMs, and no build steps are required.
 
-## Crescent Compliance
+## Crescent & Chatterbox Compliance
 
 Tavi operates completely deterministically using the Python standard library. It does not use runtime language models, remote AI APIs, or third-party inference services.
