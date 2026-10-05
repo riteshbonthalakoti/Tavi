@@ -5,3 +5,5 @@ python-multipart
 pytest
 pydantic-settings
 httpx
+rich
+prompt_toolkit

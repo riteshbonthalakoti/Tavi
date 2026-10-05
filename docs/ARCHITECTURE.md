@@ -1,33 +1,42 @@
 # Tavi Architecture
 
-**Tavi does not use an LLM at runtime.** It relies on deterministic state machines, classical NLP, intent classification, and explicit tool execution.
+**Tavi is a local, deterministic personal agent that does not use an LLM at runtime.** It relies on deterministic state machines, exact rule matching, intent classification, and explicit tool execution under centralized security policies.
 
 ## Application Architecture
 
 ```text
-Interface (Web/CLI)
+User Message / Terminal Interface (tavi.cli)
     ↓
 ApplicationService
     ↓
-ConversationEngine (NLP / Dialogue)
-    ↓
-AgentEngine (FSM / Side-effects)
-    ↓
-Task State Machine
-    ↓
-PermissionMiddleware (Centralized Security)
-    ↓
-ToolRegistry
-    ↓
-BaseTool (Execution)
-    ↓
-Structured Observation
+IntentEngine (Deterministic Classification)
+    ├── Conversational Intent (greeting, status, farewell, help)
+    │       ↓
+    │   ConversationEngine
+    │       ↓
+    │   Deterministic Response Template
+    │
+    └── Task Intent (e.g., inspect_project)
+            ↓
+        AgentEngine (FSM / Side-effects)
+            ↓
+        Task State Machine Workflow
+            ↓
+        PermissionMiddleware (Centralized Security)
+            ↓
+        ToolRegistry
+            ↓
+        BaseTool (Execution)
+            ↓
+        Structured Observation & Result
 ```
 
 ## Core Components
-- **ApplicationService**: Shared entry point unifying Web and CLI usage. Orchestrates incoming user requests.
-- **IntentEngine**: Deterministically normalizes and maps natural language inputs into recognized task intents. Does not use LLMs.
-- **IntentRegistry**: Strict pattern-based registry matching user phrases to workflows.
+- **CLI (`tavi.cli`)**: An interactive, minimal terminal interface using `rich` and `prompt_toolkit`. Features a compact information hierarchy, continuous conversation flow, and terminal-native tree visualizations. Normal mode provides a clean product UX, while `TAVI_DEBUG=1` exposes developer diagnostics.
+- **ApplicationService**: Shared entry point unifying CLI and potential web interfaces. Classifies incoming messages and separates conversational interactions from task workflows.
+- **ConversationEngine**: Purely deterministic responder for conversational intents (`greeting`, `status`, `farewell`, `help`). Bypasses the workflow execution pipeline and produces zero side effects.
+- **IntentEngine**: Deterministically normalizes and maps natural language inputs into recognized task or conversation intents via compiled regular expressions. Does not use LLMs, embeddings, or fuzzy heuristics.
+- **IntentRegistry**: Pattern-based registry registering task and conversation rules.
 - **AgentEngine**: Executes deterministic FSM workflows safely through the permission layer.
 - **WorkflowRegistry**: Stores and resolves predefined Agent workflows.
 - **ToolRegistry**: Resolves tools by name deterministically.

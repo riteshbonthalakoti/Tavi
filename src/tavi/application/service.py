@@ -50,6 +50,8 @@ class ApplicationService:
 
         # Intent Engine setup
         self.intent_registry = IntentRegistry()
+
+        # Task intents
         self.intent_registry.register("inspect_project", [
             r"^(can you\s+)?(please\s+)?inspect (this\s+)?project$",
             r"^(can you\s+)?(please\s+)?analyze (this\s+)?project$",
@@ -57,7 +59,34 @@ class ApplicationService:
             r"^(can you\s+)?(please\s+)?check (this\s+)?project$",
             r"^(can you\s+)?(please\s+)?check (this\s+)?repository$",
             r"^(can you\s+)?(please\s+)?show project structure$"
-        ])
+        ], intent_type="task")
+
+        # Conversational intents
+        self.intent_registry.register("greeting", [
+            r"^(hi|hello|hey|hey there|hello there)(\s+tavi)?$",
+            r"^good\s+(morning|afternoon|evening)(\s+tavi)?$",
+        ], intent_type="conversation")
+
+        self.intent_registry.register("status", [
+            r"^how\s+are\s+you(\s+doing)?(\s+tavi)?$",
+            r"^(are\s+)?you\s+okay(\s+tavi)?$",
+            r"^how('?s|\s+is)\s+it\s+going(\s+tavi)?$",
+            r"^how\s+are\s+things(\s+tavi)?$",
+        ], intent_type="conversation")
+
+        self.intent_registry.register("farewell", [
+            r"^(bye|goodbye|cya)(\s+tavi)?$",
+            r"^see\s+(you|ya)(\s+later)?(\s+tavi)?$",
+            r"^good\s*night(\s+tavi)?$",
+        ], intent_type="conversation")
+
+        self.intent_registry.register("help", [
+            r"^help$",
+            r"^what\s+can\s+you\s+do$",
+            r"^how\s+do\s+i\s+use\s+this$",
+            r"^commands$",
+        ], intent_type="conversation")
+
         self.intent_engine = IntentEngine(self.intent_registry)
 
     def process_chat(self, text: str, session_id: str) -> str:
@@ -68,19 +97,32 @@ class ApplicationService:
 
     def handle_message(self, message: str) -> MessageResult:
         """
-        Classifies incoming natural language, and executes workflows if supported.
+        Classifies incoming natural language, routing conversational intents to
+        the ConversationEngine and task intents to the AgentEngine.
         """
         intent_result = self.intent_engine.classify(message)
 
-        if not intent_result.is_supported:
+        if not intent_result.is_supported or not intent_result.intent_name:
             return MessageResult(
                 intent_name=None,
                 confidence=0.0,
                 executed=False,
-                response_text="I don't have a supported workflow for that request yet.",
+                response_text="I don't have a workflow for that yet. Try asking me to inspect your project.",
                 task_result=None
             )
 
+        # Conversational intent: purely deterministic responses without workflow execution
+        if intent_result.intent_type == "conversation":
+            response_text = self.conversation_engine.get_response(intent_result.intent_name)
+            return MessageResult(
+                intent_name=intent_result.intent_name,
+                confidence=intent_result.confidence,
+                executed=False,
+                response_text=response_text,
+                task_result=None
+            )
+
+        # Task intent: executed via AgentEngine -> Workflow -> PermissionMiddleware -> Tools
         task_result = self.run_task(intent_result.intent_name, intent_result.arguments)
 
         if task_result.success:

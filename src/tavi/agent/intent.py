@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 class IntentResult(BaseModel):
     intent_name: Optional[str] = None
+    intent_type: str = "task"  # "task" or "conversation"
     confidence: float = 0.0
     matched_rule: Optional[str] = None
     normalized_input: str
@@ -11,8 +12,9 @@ class IntentResult(BaseModel):
     is_supported: bool = False
 
 class IntentRule:
-    def __init__(self, name: str, patterns: List[str]):
+    def __init__(self, name: str, patterns: List[str], intent_type: str = "task"):
         self.name = name
+        self.intent_type = intent_type
         # Compile deterministic regex patterns that match the entire normalized string
         self.patterns = [re.compile(p) for p in patterns]
 
@@ -20,8 +22,8 @@ class IntentRegistry:
     def __init__(self):
         self._intents: List[IntentRule] = []
 
-    def register(self, intent_name: str, patterns: List[str]) -> None:
-        self._intents.append(IntentRule(intent_name, patterns))
+    def register(self, intent_name: str, patterns: List[str], intent_type: str = "task") -> None:
+        self._intents.append(IntentRule(intent_name, patterns, intent_type=intent_type))
 
     def get_rules(self) -> List[IntentRule]:
         return self._intents
@@ -50,6 +52,7 @@ class IntentEngine:
                 if pattern.match(normalized):
                     return IntentResult(
                         intent_name=rule.name,
+                        intent_type=rule.intent_type,
                         confidence=1.0,
                         matched_rule=pattern.pattern,
                         normalized_input=normalized,

@@ -1,37 +1,33 @@
 # Tavi
 
-Tavi is a local, non-LLM conversational and agentic companion.
+Tavi is a local, deterministic personal agent and conversational companion.
 
 ## What is Tavi?
 
-Tavi is an original fictional-character and personal-companion chatbot designed for the **Hack Club Crescent Chatterbox** challenge. The project deliberately does NOT use an LLM at runtime.
+Tavi is an original character and local agent designed for the **Hack Club Crescent Chatterbox** challenge. The project deliberately does NOT use an LLM, external AI API, or network runtime.
 
 ## Non-LLM Design
 
 **Tavi does not use an LLM at runtime.**
 
-The planned intelligence is based on:
-- deterministic rules
-- finite-state workflows
-- classical NLP
-- TF-IDF retrieval
-- Markov chains
-- optional tiny self-trained intent classifier
+The intelligence is built on:
+- deterministic regex and rule matching
+- finite-state machine (FSM) workflows
+- deterministic conversation templates
+- bounded, secure local tool execution
 
 ## Current Architecture
 
-The current architecture establishes a secure foundation for Tavi's execution environment:
+The architecture establishes a deterministic, secure execution environment:
 
-- **ConversationEngine**
-- **ApplicationService**
-- **ToolRegistry**
-- **PermissionMiddleware**
-- **FilesystemTool**
-- **ShellTool**
-- **GitTool**
-- **AgentEngine** (Planned)
-- deterministic FSM workflows (Planned)
-- future classical NLP components (Planned)
+- **CLI (`tavi.cli`)**: Minimal, compact terminal interface powered by `rich` and `prompt_toolkit`.
+- **ApplicationService**: Central coordinator separating conversational intents from task execution.
+- **ConversationEngine**: Deterministic responses for conversational intents (`greeting`, `status`, `farewell`, `help`).
+- **IntentEngine**: Rule-based intent classifier with normalization.
+- **AgentEngine**: FSM executor managing task workflows.
+- **WorkflowRegistry**: Deterministic state machine workflows (e.g., `inspect_project`).
+- **PermissionMiddleware**: Security gateway enforcing safe operations.
+- **ToolRegistry**: Secure tools (`FileSystemTool`, `ShellTool`, `GitTool`).
 
 ## Security
 
@@ -39,7 +35,7 @@ Security is critical to Tavi's architecture since it runs on your local machine:
 - workspace-bounded filesystem access
 - bounded file reads
 - `shell=False` strict execution
-- structured shell commands
+- structured command arguments
 - controlled subprocess environment
 - timeout enforcement
 - centralized permissions
@@ -59,8 +55,9 @@ Security is critical to Tavi's architecture since it runs on your local machine:
 | AgentEngine | Complete |
 | FSM workflows | Complete (inspect_project) |
 | IntentEngine | Complete (deterministic intent classifier) |
-| Conversational NLP | Planned |
-| Web UI | In progress / Planned |
+| Conversation layer | Complete (deterministic greetings, status, farewell, help) |
+| Interactive Terminal CLI | Complete (compact, continuous conversation) |
+| Web UI | Planned |
 
 ## Development
 

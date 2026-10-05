@@ -89,4 +89,43 @@ def test_application_integration():
     assert unsupported_result.confidence == 0.0
     assert unsupported_result.executed is False
     assert unsupported_result.task_result is None
-    assert "don't have a supported workflow" in unsupported_result.response_text
+    assert "don't have a workflow for that yet" in unsupported_result.response_text
+
+def test_conversational_intents():
+    app = ApplicationService()
+
+    # 1. Greeting
+    for phrase in ["hello", "hi", "hey", "good morning", "hello tavi"]:
+        res = app.handle_message(phrase)
+        assert res.intent_name == "greeting"
+        assert res.confidence == 1.0
+        assert res.executed is False
+        assert res.task_result is None
+        assert "Hey. I'm Tavi." in res.response_text
+
+    # 2. Status
+    for phrase in ["how are you", "how are you doing", "you okay", "how's it going"]:
+        res = app.handle_message(phrase)
+        assert res.intent_name == "status"
+        assert res.confidence == 1.0
+        assert res.executed is False
+        assert res.task_result is None
+        assert "Running smoothly" in res.response_text
+
+    # 3. Farewell
+    for phrase in ["bye", "goodbye", "see you", "good night"]:
+        res = app.handle_message(phrase)
+        assert res.intent_name == "farewell"
+        assert res.confidence == 1.0
+        assert res.executed is False
+        assert res.task_result is None
+        assert "See you" in res.response_text
+
+    # 4. Help
+    for phrase in ["help", "what can you do", "commands"]:
+        res = app.handle_message(phrase)
+        assert res.intent_name == "help"
+        assert res.confidence == 1.0
+        assert res.executed is False
+        assert res.task_result is None
+        assert "inspect this project" in res.response_text
