@@ -3,321 +3,910 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tavi — Terminal Agent</title>
+  <title>Tavi — Web Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      background: radial-gradient(circle at 50% 15%, #141a24 0%, #080b10 100%);
-      color: #e6edf3;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 24px;
+    :root {
+      --bg-dark: #080c14;
+      --bg-surface: rgba(15, 23, 42, 0.75);
+      --bg-surface-elevated: #151f32;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(56, 189, 248, 0.4);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --user-bubble-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      --tavi-bubble-bg: rgba(21, 31, 50, 0.85);
     }
-    #terminal-frame {
-      width: 100%;
-      max-width: 840px;
-      height: 86vh;
-      background: #0d1117;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #172554 0%, #080c14 65%);
+      color: var(--text-primary);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow-x: hidden;
     }
-    #title-bar {
-      padding: 12px 18px;
-      background: #161b22;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header Nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(8, 12, 20, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      user-select: none;
     }
-    .window-controls { display: flex; gap: 7px; }
-    .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-    .dot-red { background: #ff5f56; }
-    .dot-yellow { background: #ffbd2e; }
-    .dot-green { background: #27c93f; }
-    .terminal-title {
-      font-size: 13px;
-      color: #8b949e;
-      letter-spacing: 0.5px;
+
+    .brand-section {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 12px;
     }
-    .title-accent { color: #ffffff; font-weight: 600; }
-    .status-badge {
+
+    .avatar-wrapper {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      padding: 3px 9px;
-      border-radius: 12px;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
     }
-    .status-pulse {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #38bdf8;
-      box-shadow: 0 0 6px #38bdf8;
-    }
-    #messages {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-    .banner-card {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(22, 27, 34, 0.6);
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 8px;
-    }
-    .banner-header {
-      font-size: 15px;
+
+    .avatar-icon {
+      font-size: 18px;
       font-weight: 700;
       color: #ffffff;
-      margin-bottom: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .brand-info h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .banner-version {
-      font-size: 11px;
-      color: #8b949e;
-      font-weight: normal;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 1px 6px;
-      border-radius: 4px;
-    }
-    .banner-desc { font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 12px; }
-    .chip-container { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      font-family: inherit;
+
+    .brand-info p {
       font-size: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #c9d1d9;
-      padding: 5px 11px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      color: var(--text-secondary);
+      font-weight: 400;
     }
-    .chip:hover {
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.4);
-      color: #38bdf8;
-    }
-    .message-block { display: flex; flex-direction: column; gap: 5px; }
-    .meta-line { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-    .user-badge { color: #8b949e; font-weight: 600; letter-spacing: 0.5px; }
-    .tavi-badge { color: #38bdf8; font-weight: 700; letter-spacing: 0.5px; }
-    .content-box {
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .user-content { color: #ffffff; padding-left: 12px; border-left: 2px solid #30363d; }
-    .tavi-content { color: #e6edf3; padding-left: 12px; border-left: 2px solid #38bdf8; }
-    #composer-area {
-      padding: 16px 20px;
-      background: #161b22;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      gap: 12px;
+
+    .badge-crescent {
+      display: inline-flex;
       align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(236, 72, 153, 0.12);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      color: #f472b6;
+      font-size: 11px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
     }
-    .prompt-indicator { color: #38bdf8; font-size: 18px; font-weight: 700; user-select: none; }
-    #chat-input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: #0d1117;
-      color: #ffffff;
-      outline: none;
-      font-size: 14px;
-      font-family: inherit;
+
+    .badge-crescent:hover {
+      background: rgba(236, 72, 153, 0.2);
+      border-color: rgba(236, 72, 153, 0.6);
+      transform: translateY(-1px);
     }
-    #chat-input:focus { border-color: #38bdf8; }
-    #send-btn {
-      padding: 10px 20px;
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 6px;
-      background: #38bdf8;
-      color: #080b10;
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Special Interactive Link Buttons */
+    .special-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
       cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .special-btn-gh {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+    }
+    .special-btn-gh:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .special-btn-crescent {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15));
+      border-color: rgba(236, 72, 153, 0.35);
+      color: #f472b6;
+    }
+    .special-btn-crescent:hover {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.25));
+      border-color: rgba(236, 72, 153, 0.7);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px rgba(236, 72, 153, 0.3);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-emerald);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 20px 140px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Hero / Welcome Card */
+    .welcome-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .welcome-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
+      flex-shrink: 0;
+    }
+
+    .welcome-title-group h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-rule-based {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .welcome-title-group p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Action Grid */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .quick-action-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .quick-action-item:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .quick-action-title {
       font-size: 13px;
       font-weight: 600;
-      font-family: inherit;
-      transition: all 0.15s ease;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    #send-btn:hover { background: #7dd3fc; border-color: #7dd3fc; }
+
+    .quick-action-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Chat Messages Stream */
+    #chat-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+    }
+
+    .message-row {
+      display: flex;
+      gap: 12px;
+      animation: fadeInSlide 0.25s ease-out;
+    }
+
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .msg-avatar.tavi {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .msg-avatar.user {
+      background: #334155;
+      color: #f8fafc;
+    }
+
+    .msg-bubble {
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .message-row.user .msg-bubble {
+      background: var(--user-bubble-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.tavi .msg-bubble {
+      background: var(--tavi-bubble-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Structured Inspection Card inside chat */
+    .inspection-card {
+      margin-top: 10px;
+      background: rgba(10, 15, 26, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .inspection-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .inspection-header span {
+      font-weight: 600;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .badge-clean { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-dirty { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+
+    .fact-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+
+    .fact-icon {
+      color: var(--accent-emerald);
+      font-weight: bold;
+    }
+
+    .project-summary-box {
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-cyan);
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .project-summary-box strong {
+      color: #ffffff;
+    }
+
+    /* Typing Indicator */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 18px;
+      background: var(--tavi-bubble-bg);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      animation: typingBlink 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typingBlink {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Fixed Composer Dock at Bottom */
+    .composer-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(8, 12, 20, 0.95) 40%, #080c14 100%);
+      backdrop-filter: blur(12px);
+      padding: 16px 20px 24px;
+      z-index: 40;
+    }
+
+    .composer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .suggestions-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .suggestions-bar::-webkit-scrollbar { display: none; }
+
+    .suggestion-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #cbd5e1;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .suggestion-chip:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--border-hover);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .input-box-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .input-box-wrapper:focus-within {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2), 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #ffffff;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .input-field::placeholder {
+      color: var(--text-muted);
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      margin-right: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+    }
+
+    .send-btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.45);
+    }
+
+    .send-btn:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 10px 14px; }
+      .header-actions .special-btn { padding: 5px 10px; font-size: 11px; }
+      .welcome-card { padding: 18px; }
+      .quick-actions-grid { grid-template-columns: 1fr; }
+      main { padding: 14px 12px 140px; }
+    }
   </style>
 </head>
 <body>
-  <div id="terminal-frame">
-    <div id="title-bar">
-      <div class="window-controls">
-        <span class="dot dot-red"></span>
-        <span class="dot dot-yellow"></span>
-        <span class="dot dot-green"></span>
+  <div class="ambient-glow"></div>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="brand-section">
+      <div class="avatar-wrapper">
+        <span class="avatar-icon">T</span>
       </div>
-      <div class="terminal-title">
-        <span class="title-accent">TAVI</span>
-        <span>·</span>
-        <span>personal agent</span>
-      </div>
-      <div class="status-badge" id="status-indicator">
-        <span class="status-pulse"></span>
-        <span id="status-label">local · ready</span>
+      <div class="brand-info">
+        <h1>
+          TAVI
+          <a class="badge-crescent" href="https://crescent.hackclub.com/refuge" target="_blank" rel="noopener">
+            🌙 Crescent Week 2
+          </a>
+        </h1>
+        <p>Personal Workspace Companion</p>
       </div>
     </div>
 
-    <div id="messages">
-      <div class="banner-card">
-        <div class="banner-header">
-          <span>TAVI</span>
-          <span class="banner-version">local agent</span>
+    <div class="header-actions">
+      <div id="connection-pill" class="status-pill">
+        <span class="status-dot"></span>
+        <span id="connection-text">Connected</span>
+      </div>
+
+      <a class="special-btn special-btn-crescent" href="https://crescent.hackclub.com/guides/chatterbox" target="_blank" rel="noopener">
+        <span>💬 Chatterbox Guide</span>
+      </a>
+
+      <a class="special-btn special-btn-gh" href="https://github.com/riteshbonthalakoti/Tavi" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span>GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Chat Workspace -->
+  <main>
+    <!-- Welcome Hero Card -->
+    <div class="welcome-card" id="welcome-card">
+      <div class="welcome-header">
+        <div class="welcome-avatar">⚡</div>
+        <div class="welcome-title-group">
+          <h2>
+            Meet Tavi
+            <span class="badge-rule-based">Deterministic · Zero AI</span>
+          </h2>
+          <p>
+            Your lightweight workspace companion. Tavi inspects local repositories, checks Git branch states, identifies frameworks, and converses with zero latency and full privacy.
+          </p>
         </div>
-        <div class="banner-desc">Deterministic workspace companion. Ready to inspect projects, check Git status, and assist.</div>
-        <div class="chip-container">
-          <button type="button" class="chip" data-cmd="inspect this project">🔍 inspect this project</button>
-          <button type="button" class="chip" data-cmd="what can you do for me?">⚡ capabilities</button>
-          <button type="button" class="chip" data-cmd="what are you doing?">💡 status</button>
-          <button type="button" class="chip" data-cmd="help">❓ help</button>
+      </div>
+
+      <div class="quick-actions-grid">
+        <div class="quick-action-item" onclick="triggerAction('inspect this project')">
+          <div class="quick-action-title">🔍 Inspect Project</div>
+          <div class="quick-action-desc">Check Git branch, modified files, and stack</div>
+        </div>
+        <div class="quick-action-item" onclick="triggerAction('what can you do?')">
+          <div class="quick-action-title">⚡ Capabilities</div>
+          <div class="quick-action-desc">Discover what Tavi can inspect and handle</div>
+        </div>
+        <div class="quick-action-item" onclick="triggerAction('how are you?')">
+          <div class="quick-action-title">💡 System Status</div>
+          <div class="quick-action-desc">Verify local agent operational health</div>
+        </div>
+        <div class="quick-action-item" onclick="triggerAction('help')">
+          <div class="quick-action-title">❓ Help & Tips</div>
+          <div class="quick-action-desc">View supported queries and quick commands</div>
         </div>
       </div>
     </div>
 
-    <div id="composer-area">
-      <span class="prompt-indicator">›</span>
-      <input type="text" id="chat-input" placeholder="Type a message or command (e.g. inspect this project)..." autocomplete="off" autofocus>
-      <button id="send-btn" type="button">Send ↵</button>
+    <!-- Chat Message Stream -->
+    <div id="chat-stream"></div>
+
+    <!-- Typing Indicator -->
+    <div class="message-row tavi" id="typing-row" style="display: none;">
+      <div class="msg-avatar tavi">T</div>
+      <div class="typing-indicator" id="typing-indicator" style="display: flex;">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Composer Dock -->
+  <div class="composer-dock">
+    <div class="composer-inner">
+      <div class="suggestions-bar">
+        <div class="suggestion-chip" onclick="triggerAction('inspect this project')">🔍 inspect this project</div>
+        <div class="suggestion-chip" onclick="triggerAction('what can you do for me?')">⚡ what can you do?</div>
+        <div class="suggestion-chip" onclick="triggerAction('how are you doing?')">💡 status check</div>
+        <div class="suggestion-chip" onclick="triggerAction('tell me a joke')">🎭 joke</div>
+        <div class="suggestion-chip" onclick="triggerAction('help')">❓ help</div>
+      </div>
+
+      <div class="input-box-wrapper">
+        <input
+          type="text"
+          id="message-input"
+          class="input-field"
+          placeholder="Ask Tavi something or inspect your workspace (e.g. 'inspect this project')..."
+          autocomplete="off"
+        />
+        <button id="send-button" class="send-btn" onclick="handleSend()">
+          <span>Send</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
-    const input = document.getElementById("chat-input");
-    const btn = document.getElementById("send-btn");
-    const msgs = document.getElementById("messages");
-    const statusLabel = document.getElementById("status-label");
+    const inputEl = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+    const chatStream = document.getElementById("chat-stream");
+    const typingRow = document.getElementById("typing-row");
+    const connPill = document.getElementById("connection-pill");
+    const connText = document.getElementById("connection-text");
 
-    function appendMessage(sender, text, isUser) {
-      const block = document.createElement("div");
-      block.className = "message-block";
+    let isBackendAvailable = null;
 
-      const meta = document.createElement("div");
-      meta.className = "meta-line";
-
-      const badge = document.createElement("span");
-      badge.className = isUser ? "user-badge" : "tavi-badge";
-      badge.textContent = isUser ? "You" : "Tavi";
-      meta.appendChild(badge);
-
-      const content = document.createElement("div");
-      content.className = "content-box " + (isUser ? "user-content" : "tavi-content");
-      content.textContent = text;
-
-      block.appendChild(meta);
-      block.appendChild(content);
-      msgs.appendChild(block);
-
-      msgs.scrollTop = msgs.scrollHeight;
+    // Check backend connection on load
+    async function checkBackend() {
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "status" })
+        });
+        if (res.ok) {
+          isBackendAvailable = true;
+          connText.textContent = "Local Server Connected";
+          connPill.style.background = "rgba(16, 185, 129, 0.12)";
+          connPill.style.color = "#10b981";
+          return;
+        }
+      } catch (e) {
+        // static GitHub Pages or server off
+      }
+      isBackendAvailable = false;
+      connText.textContent = "Offline Engine (Active)";
+      connPill.style.background = "rgba(56, 189, 248, 0.12)";
+      connPill.style.color = "#38bdf8";
     }
 
-    function getLocalResponse(text) {
-      const norm = text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
-      if (/^(hi|hello|hey|good morning|good afternoon|good evening)(\s+tavi)?$/.test(norm)) {
+    // Client-side deterministic engine fallback
+    function getLocalDeterministicResponse(text) {
+      const cleaned = text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+      if (!cleaned) return "Empty message.";
+
+      if (/^(hi|hello|hey|good morning|good afternoon|good evening)(\s+tavi)?$/.test(cleaned)) {
         return "Hey. I'm Tavi.\nWhat are we working on?";
       }
-      if (/^(how are you|how are you doing|you okay|hows it going|how are things)(\s+tavi)?$/.test(norm)) {
+      if (/^(how are you|how are you doing|you okay|hows it going|how are things)(\s+tavi)?$/.test(cleaned)) {
         return "Running smoothly.\nWhat should we work on?";
       }
-      if (/^(what are you doing|what are you working on|what are you up to)(\s+tavi)?$/.test(norm)) {
-        return "I'm here and ready.\nI can currently inspect your project and repository.";
+      if (/^(what are you doing|what are you working on|what are you up to)(\s+tavi)?$/.test(cleaned)) {
+        return "I'm here and ready.\nI can inspect your project, Git state, and repository setup.";
       }
-      if (/^(what can you do|what can you do for me|what do you do|what are your capabilities|capabilities|features)(\s+tavi)?$/.test(norm)) {
+      if (/^(what can you do|what can you do for me|what do you do|what are your capabilities|capabilities|features)(\s+tavi)?$/.test(cleaned)) {
         return "I can inspect your project, repository, Git state, and test setup.";
       }
-      if (/^(tell me a joke|joke)$/.test(norm)) {
+      if (/^(tell me a joke|joke)$/.test(cleaned)) {
         return "I can't do that one yet.\nI'm currently focused on project work.";
       }
-      if (/^(bye|goodbye|see you|good night)(\s+tavi)?$/.test(norm)) {
+      if (/^(bye|goodbye|see you|good night)(\s+tavi)?$/.test(cleaned)) {
         return "See you.";
       }
-      if (/^(help|commands|how do i use this)$/.test(norm)) {
-        return "I can inspect your project, repository, Git state, and test setup.\n\nTry:\n  inspect this project";
+      if (/^(can you\s+)?(please\s+)?(inspect|analyze|check)\s+(this|your|my)?\s*(project|repository)$/.test(cleaned)) {
+        return `Inspecting workspace\n\n  ✓ Git repository\n  ✓ Python project\n  ✓ pytest detected\n\n  PROJECT\n  Python · pytest · master · clean`;
       }
-      if (/^(can you\s+)?(please\s+)?(inspect|analyze|check)\s+(this|your|my)?\s*(project|repository)$/.test(norm)) {
-        return "Inspecting workspace\n\n  ✓ Git repository (master · clean)\n  ✓ Python project (tavi.py, web.py, index.html)\n  ✓ Test setup ready\n\n  PROJECT\n  Python · master · clean";
+      if (/^(help|commands|how do i use this)$/.test(cleaned)) {
+        return "I can inspect your project, repository, Git state, and test setup.\n\nTry asking:\n  inspect this project";
       }
+
       return "I can help with project work right now.\nTry asking me to inspect your project.";
     }
 
-    async function sendMessage(customText) {
-      const text = (customText || input.value).trim();
-      if (!text) return;
+    function renderMessage(role, text) {
+      const row = document.createElement("div");
+      row.className = `message-row ${role}`;
 
-      appendMessage("You", text, true);
-      if (!customText) {
-        input.value = "";
+      const avatar = document.createElement("div");
+      avatar.className = `msg-avatar ${role}`;
+      avatar.textContent = role === "user" ? "You" : "T";
+
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+
+      // If project inspection response, render as formatted visual card
+      if (text.includes("Inspecting workspace")) {
+        const isClean = text.includes("clean");
+        const lines = text.split("\n").filter(l => l.trim().startsWith("✓"));
+        let factsHtml = lines.map(l => `
+          <div class="fact-row">
+            <span class="fact-icon">✓</span>
+            <span>${escapeHtml(l.replace("✓", "").trim())}</span>
+          </div>
+        `).join("");
+
+        bubble.innerHTML = `
+          <div style="font-weight: 600; margin-bottom: 8px;">Workspace Inspection Results</div>
+          <div class="inspection-card">
+            <div class="inspection-header">
+              <span>📁 Local Repository</span>
+              <span class="badge-pill ${isClean ? 'badge-clean' : 'badge-dirty'}">${isClean ? '● Clean' : '● Modified'}</span>
+            </div>
+            ${factsHtml}
+            <div class="project-summary-box">
+              <strong>Stack:</strong> Python · pytest · Git master
+            </div>
+          </div>
+        `;
+      } else {
+        bubble.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
       }
-      input.focus();
 
-      const isRemote = window.location.hostname.includes("github.io");
-      const baseUrl = isRemote ? "" : (window.location.protocol === "file:" ? "http://localhost:8000" : "");
-
-      try {
-        if (isRemote) {
-          throw new Error("client-side");
-        }
-        const res = await fetch(baseUrl + "/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, text: text })
-        });
-
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
-        const data = await res.json();
-        appendMessage("Tavi", data.response || "", false);
-        statusLabel.textContent = "local · ready";
-      } catch (err) {
-        const reply = getLocalResponse(text);
-        appendMessage("Tavi", reply, false);
-        statusLabel.textContent = isRemote ? "demo · ready" : "local · ready";
+      if (role === "tavi") {
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+      } else {
+        row.appendChild(bubble);
+        row.appendChild(avatar);
       }
+
+      chatStream.appendChild(row);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
 
-    btn.addEventListener("click", () => sendMessage());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        sendMessage();
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function handleSend() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = "";
+      renderMessage("user", text);
+
+      // Show typing indicator with authentic pause
+      typingRow.style.display = "flex";
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
+      const startTime = Date.now();
+      let reply = "";
+
+      if (isBackendAvailable) {
+        try {
+          const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            reply = data.response;
+          } else {
+            reply = getLocalDeterministicResponse(text);
+          }
+        } catch (e) {
+          reply = getLocalDeterministicResponse(text);
+        }
+      } else {
+        reply = getLocalDeterministicResponse(text);
+      }
+
+      // Authentic slight response pacing for natural dialogue feel
+      const elapsed = Date.now() - startTime;
+      const targetDelay = Math.min(600, Math.max(250, text.length * 15));
+      const remainingDelay = Math.max(0, targetDelay - elapsed);
+
+      setTimeout(() => {
+        typingRow.style.display = "none";
+        renderMessage("tavi", reply);
+      }, remainingDelay);
+    }
+
+    function triggerAction(actionText) {
+      inputEl.value = actionText;
+      handleSend();
+    }
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
       }
     });
 
-    document.querySelectorAll(".chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        const cmd = chip.getAttribute("data-cmd");
-        sendMessage(cmd);
-      });
-    });
+    checkBackend();
   </script>
 </body>
 </html>
