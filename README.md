@@ -58,6 +58,7 @@ Security is critical to Tavi's architecture since it runs on your local machine:
 | Git read-only tooling | Complete |
 | AgentEngine | Complete |
 | FSM workflows | Complete (inspect_project) |
+| IntentEngine | Complete (deterministic intent classifier) |
 | Conversational NLP | Planned |
 | Web UI | In progress / Planned |
 

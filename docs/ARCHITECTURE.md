@@ -25,7 +25,9 @@ Structured Observation
 ```
 
 ## Core Components
-- **ApplicationService**: Shared entry point unifying Web and CLI usage.
+- **ApplicationService**: Shared entry point unifying Web and CLI usage. Orchestrates incoming user requests.
+- **IntentEngine**: Deterministically normalizes and maps natural language inputs into recognized task intents. Does not use LLMs.
+- **IntentRegistry**: Strict pattern-based registry matching user phrases to workflows.
 - **AgentEngine**: Executes deterministic FSM workflows safely through the permission layer.
 - **WorkflowRegistry**: Stores and resolves predefined Agent workflows.
 - **ToolRegistry**: Resolves tools by name deterministically.
