@@ -4,6 +4,17 @@ import re
 import subprocess
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 CYAN = "\033[36m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
