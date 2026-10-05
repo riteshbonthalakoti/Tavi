@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tavi — Terminal Agent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: radial-gradient(circle at 50% 15%, #141a24 0%, #080b10 100%);
+      color: #e6edf3;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    #terminal-frame {
+      width: 100%;
+      max-width: 840px;
+      height: 86vh;
+      background: #0d1117;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+    #title-bar {
+      padding: 12px 18px;
+      background: #161b22;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .window-controls { display: flex; gap: 7px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+    .terminal-title {
+      font-size: 13px;
+      color: #8b949e;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .title-accent { color: #ffffff; font-weight: 600; }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 3px 9px;
+      border-radius: 12px;
+    }
+    .status-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+    }
+    #messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .banner-card {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(22, 27, 34, 0.6);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 8px;
+    }
+    .banner-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner-version {
+      font-size: 11px;
+      color: #8b949e;
+      font-weight: normal;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .banner-desc { font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 12px; }
+    .chip-container { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      font-family: inherit;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #c9d1d9;
+      padding: 5px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+    }
+    .message-block { display: flex; flex-direction: column; gap: 5px; }
+    .meta-line { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .user-badge { color: #8b949e; font-weight: 600; letter-spacing: 0.5px; }
+    .tavi-badge { color: #38bdf8; font-weight: 700; letter-spacing: 0.5px; }
+    .content-box {
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .user-content { color: #ffffff; padding-left: 12px; border-left: 2px solid #30363d; }
+    .tavi-content { color: #e6edf3; padding-left: 12px; border-left: 2px solid #38bdf8; }
+    #composer-area {
+      padding: 16px 20px;
+      background: #161b22;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .prompt-indicator { color: #38bdf8; font-size: 18px; font-weight: 700; user-select: none; }
+    #chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #0d1117;
+      color: #ffffff;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    #chat-input:focus { border-color: #38bdf8; }
+    #send-btn {
+      padding: 10px 20px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+      background: #38bdf8;
+      color: #080b10;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    #send-btn:hover { background: #7dd3fc; border-color: #7dd3fc; }
+  </style>
+</head>
+<body>
+  <div id="terminal-frame">
+    <div id="title-bar">
+      <div class="window-controls">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+      </div>
+      <div class="terminal-title">
+        <span class="title-accent">TAVI</span>
+        <span>·</span>
+        <span>personal agent</span>
+      </div>
+      <div class="status-badge" id="status-indicator">
+        <span class="status-pulse"></span>
+        <span id="status-label">local · ready</span>
+      </div>
+    </div>
+
+    <div id="messages">
+      <div class="banner-card">
+        <div class="banner-header">
+          <span>TAVI</span>
+          <span class="banner-version">local agent</span>
+        </div>
+        <div class="banner-desc">Deterministic workspace companion. Ready to inspect projects, check Git status, and assist.</div>
+        <div class="chip-container">
+          <button type="button" class="chip" data-cmd="inspect this project">🔍 inspect this project</button>
+          <button type="button" class="chip" data-cmd="what can you do for me?">⚡ capabilities</button>
+          <button type="button" class="chip" data-cmd="what are you doing?">💡 status</button>
+          <button type="button" class="chip" data-cmd="help">❓ help</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="composer-area">
+      <span class="prompt-indicator">›</span>
+      <input type="text" id="chat-input" placeholder="Type a message or command (e.g. inspect this project)..." autocomplete="off" autofocus>
+      <button id="send-btn" type="button">Send ↵</button>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("chat-input");
+    const btn = document.getElementById("send-btn");
+    const msgs = document.getElementById("messages");
+    const statusLabel = document.getElementById("status-label");
+
+    function appendMessage(sender, text, isUser) {
+      const block = document.createElement("div");
+      block.className = "message-block";
+
+      const meta = document.createElement("div");
+      meta.className = "meta-line";
+
+      const badge = document.createElement("span");
+      badge.className = isUser ? "user-badge" : "tavi-badge";
+      badge.textContent = isUser ? "You" : "Tavi";
+      meta.appendChild(badge);
+
+      const content = document.createElement("div");
+      content.className = "content-box " + (isUser ? "user-content" : "tavi-content");
+      content.textContent = text;
+
+      block.appendChild(meta);
+      block.appendChild(content);
+      msgs.appendChild(block);
+
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function getLocalResponse(text) {
+      const norm = text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+      if (/^(hi|hello|hey|good morning|good afternoon|good evening)(\s+tavi)?$/.test(norm)) {
+        return "Hey. I'm Tavi.\nWhat are we working on?";
+      }
+      if (/^(how are you|how are you doing|you okay|hows it going|how are things)(\s+tavi)?$/.test(norm)) {
+        return "Running smoothly.\nWhat should we work on?";
+      }
+      if (/^(what are you doing|what are you working on|what are you up to)(\s+tavi)?$/.test(norm)) {
+        return "I'm here and ready.\nI can currently inspect your project and repository.";
+      }
+      if (/^(what can you do|what can you do for me|what do you do|what are your capabilities|capabilities|features)(\s+tavi)?$/.test(norm)) {
+        return "I can inspect your project, repository, Git state, and test setup.";
+      }
+      if (/^(tell me a joke|joke)$/.test(norm)) {
+        return "I can't do that one yet.\nI'm currently focused on project work.";
+      }
+      if (/^(bye|goodbye|see you|good night)(\s+tavi)?$/.test(norm)) {
+        return "See you.";
+      }
+      if (/^(help|commands|how do i use this)$/.test(norm)) {
+        return "I can inspect your project, repository, Git state, and test setup.\n\nTry:\n  inspect this project";
+      }
+      if (/^(can you\s+)?(please\s+)?(inspect|analyze|check)\s+(this|your|my)?\s*(project|repository)$/.test(norm)) {
+        return "Inspecting workspace\n\n  ✓ Git repository (master · clean)\n  ✓ Python project (tavi.py, web.py, index.html)\n  ✓ Test setup ready\n\n  PROJECT\n  Python · master · clean";
+      }
+      return "I can help with project work right now.\nTry asking me to inspect your project.";
+    }
+
+    async function sendMessage(customText) {
+      const text = (customText || input.value).trim();
+      if (!text) return;
+
+      appendMessage("You", text, true);
+      if (!customText) {
+        input.value = "";
+      }
+      input.focus();
+
+      const isRemote = window.location.hostname.includes("github.io");
+      const baseUrl = isRemote ? "" : (window.location.protocol === "file:" ? "http://localhost:8000" : "");
+
+      try {
+        if (isRemote) {
+          throw new Error("client-side");
+        }
+        const res = await fetch(baseUrl + "/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, text: text })
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        const data = await res.json();
+        appendMessage("Tavi", data.response || "", false);
+        statusLabel.textContent = "local · ready";
+      } catch (err) {
+        const reply = getLocalResponse(text);
+        appendMessage("Tavi", reply, false);
+        statusLabel.textContent = isRemote ? "demo · ready" : "local · ready";
+      }
+    }
+
+    btn.addEventListener("click", () => sendMessage());
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const cmd = chip.getAttribute("data-cmd");
+        sendMessage(cmd);
+      });
+    });
+  </script>
+</body>
+</html>

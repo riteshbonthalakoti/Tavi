@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-jinja2
-python-multipart
-pytest
-pydantic-settings
-httpx
-rich
-prompt_toolkit
